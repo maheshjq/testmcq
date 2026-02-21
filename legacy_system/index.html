@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MCQ Quiz</title>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #ffffff;
+            /* White background */
+            color: #000000;
+            /* Black text */
+            font-size: 1.5em;
+            /* Responsive font size */
+        }
+
+        #quiz-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #ddd;
+            /* Light gray background for progress bar */
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .point-value {
+            font-style: italic;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            /* Green color for progress */
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Question Styles */
+        .question {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            /* Light gray border */
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            /* Very light gray background for question */
+        }
+
+        .question p {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .question label {
+            font-size: 1.1em;
+            display: block;
+            margin: 15px 0;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .question input[type="radio"] {
+            transform: scale(1.5);
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        /* Feedback Styles */
+        .feedback {
+            margin-top: 20px;
+            font-style: italic;
+            font-size: 1em;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.05);
+            /* Light background for feedback */
+            border-radius: 5px;
+            word-wrap: break-word;
+        }
+
+        .feedback.incorrect {
+            color: #ff4444;
+            /* Red for incorrect */
+            background-color: rgba(255, 68, 68, 0.1);
+        }
+
+        .feedback.correct {
+            color: #4CAF50;
+            /* Green for correct */
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        /* Button Styles */
+        .button,
+        .next-button {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            border-radius: 5px;
+            width: 100%;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+
+        .button:hover,
+        .next-button:hover {
+            background-color: #45a049;
+        }
+
+        .next-button {
+            background-color: #2196F3;
+            /* Blue color for Next button */
+        }
+
+        .next-button:hover {
+            background-color: #1976D2;
+        }
+
+        .button:disabled,
+        .next-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Countdown Timer Styles */
+        #countdown {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 5px;
+        }
+
+        /* Result Styles */
+        #result h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #000000;
+        }
+
+        #result p {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #000000;
+        }
+
+
+        /* Modal Dialog Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+            color: #34495e;
+        }
+
+        .close-button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            float: right;
+        }
+
+        .close-button:hover {
+            background-color: #2980b9;
+        }
+
+        /* User Info Styles */
+        #user-info-container {
+            margin-bottom: 30px;
+        }
+
+        #user-info-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        #username,
+        #email {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        #start-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #start-button:hover {
+            background-color: #45a049;
+        }
+
+        /* Additional improvements for very small screens */
+        @media (max-width: 320px) {
+            .question label {
+                padding: 12px;
+                font-size: 0.95em;
+            }
+
+            .question input[type="radio"] {
+                transform: scale(1.2);
+                margin-right: 8px;
+            }
+        }
+
+        /* Responsive Adjustments */
+        /* Responsive Adjustments */
+        @media (max-width: 600px) {
+            body {
+                font-size: 1.2em;
+                padding: 5px;
+            }
+
+            .question {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+
+            .question p {
+                font-size: 1.1em;
+                margin-bottom: 15px;
+            }
+
+            /* Make choices easier to tap */
+            .question label {
+                padding: 15px;
+                margin: 8px 0;
+                font-size: 1em;
+                display: flex;
+                align-items: center;
+                min-height: 44px; /* Minimum touch target size */
+                flex-wrap: wrap; /* Allow content to wrap */
+            }
+
+            /* Adjust radio button size for mobile */
+            .question input[type="radio"] {
+                transform: scale(1.2); /* Slightly smaller scale */
+                margin-right: 10px;
+                flex-shrink: 0; /* Prevent radio button from shrinking */
+            }
+
+            /* Choice text wrapping */
+            .question label span {
+                flex: 1;
+                word-break: break-word;
+                max-width: 100%; /* Ensure the text doesn't overflow */
+            }
+
+            /* Increase spacing between choices */
+            .question label + label {
+                margin-top: 10px;
+            }
+
+            /* Make sure the feedback text is readable */
+            .feedback {
+                font-size: 0.95em;
+                padding: 12px;
+                margin: 15px 0;
+            }
+        }
+                
+        /* Add these styles to your existing CSS */
+        .quiz-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            text-align: center;
+        }
+
+        .copyright-notice {
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .copyright-year {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .copyright-text {
+            margin: 10px 0;
+        }
+
+        .usage-notice {
+            font-style: italic;
+            color: #e74c3c;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .contact-info {
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .contact-info a {
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .contact-info a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        #button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .next-button,
+        .button {
+            min-width: 150px;
+        }
+
+        .feedback {
+            margin: 20px 0;
+        }
+    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1FR0Z6RCGK"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-1FR0Z6RCGK'); // Replace with your GA4 Measurement ID
+    </script>
+</head>
+
+<body>
+    <div id="quiz-container">
+        <h3>දහම්පාසල් බහුවරණ ප්‍රශ්න</h3>
+        <div id="user-info-container">
+            <input type="text" id="username" placeholder="Enter your username (required)" required>
+            <input type="email" id="email" placeholder="Enter your email (optional)">
+            <button id="start-button" onclick="startQuiz()">Start Quiz</button>
+        </div>
+        <div id="countdown" class="hidden"></div>
+        <div class="progress-bar hidden">
+            <div id="progress" class="progress"></div>
+        </div>
+        <div id="quiz" class="hidden"></div>
+        <div id="result" class="hidden"></div>
+
+        <!-- Add the footer at the bottom -->
+        <div class="quiz-footer">
+            <div class="copyright-notice">
+                <p class="copyright-text">
+                    <span class="copyright-year">© Mahesh Nanayakkara 2024. All Rights Reserved.</span>
+                </p>
+                <p class="copyright-text">
+                    These Multiple Choice Questions (MCQs) are protected by copyright law.
+                </p>
+                <p class="usage-notice">
+                    For educational use only. Not for commercial distribution.
+                </p>
+                <div class="contact-info">
+                    <p>For permission requests or inquiries, please contact:</p>
+                    <p>Mahesh Nanayakkara</p>
+                    <p>Email: <a href="mailto:maheshjq@gmail.com">maheshjq@gmail.com</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom modalDialog Box -->
+    <div id="modalDialog" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Notice</h2>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="close-button" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz State Variables
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let totalScore = 0;
+        let totalPossiblePoints = 0; // New variable to store total possible points
+        const answeredQuestions = new Set();
+        let wrongAttempts = [];
+        let countdownTimer;
+        let waitTime = 10;
+        let username = '';
+        let email = '';
+
+        // Initialize Quiz on Page Load
+        document.addEventListener('DOMContentLoaded', loadQuestions);
+
+        function showModal(message) {
+            document.getElementById('modalMessage').innerText = message;
+            document.getElementById('modalDialog').style.display = 'flex';
+            // Disable background interaction
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modalDialog').style.display = 'none';
+            // Re-enable background interaction
+            document.body.style.overflow = 'auto';
+        }
+
+        function startQuiz() {
+            username = document.getElementById('username').value.trim();
+            email = document.getElementById('email').value.trim();
+            if (!username) {
+                showModal("Please enter your username before starting the quiz.");
+                return;
+            }
+            if (email && !isValidEmail(email)) {
+                showModal("Please enter a valid email address or leave it empty.");
+                return;
+            }
+            Analytics.trackQuizStart('<?= subject ?>', username);
+            document.getElementById('user-info-container').style.display = 'none';
+            document.getElementById('quiz').classList.remove('hidden');
+            document.querySelector('.progress-bar').classList.remove('hidden');
+            loadQuestions();
+        }
+
+        function loadQuestions() {
+            // Get server-provided variables with defaults
+            const subject = '<?!= subject || "" ?>';
+            Analytics.trackPageView(subject);
+            const subjectError = <?!= subjectError || false ?>;
+            const errorMessage = '<?!= errorMessage || "" ?>';
+
+            if (subjectError) {
+                // Hide the user info container
+                document.getElementById('user-info-container').style.display = 'none';
+
+                const errorHtml = `
+                    <div style="text-align: center; padding: 20px; margin: 20px 0; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px;">
+                        <h2 style="color: #856404; margin-bottom: 15px;">Notice</h2>
+                        <p style="color: #856404;">${errorMessage || 'Please provide a valid subject in the URL'}</p>
+                        <div style="margin-top: 20px;">
+                            <p style="color: #666;">Example URL format:</p>
+                            <code style="background: #f8f9fa; padding: 5px 10px; border-radius: 4px;">
+                                .../exec?subject=grade_10_lesson_05
+                            </code>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('quiz-container').insertAdjacentHTML('afterbegin', errorHtml);
+                return;
+            }
+
+            // Continue with normal quiz initialization
+            username = document.getElementById('username').value.trim();
+            email = document.getElementById('email').value.trim();
+
+            // Only check username is required
+            if (!username) {
+                showModal("Please enter your username before starting the quiz.");
+                return;
+            }
+
+            // Only validate email if one is provided
+            if (email && !isValidEmail(email)) {
+                showModal("Please enter a valid email address or leave it empty.");
+                return;
+            }
+
+            document.getElementById('user-info-container').style.display = 'none';
+            document.getElementById('quiz').classList.remove('hidden');
+            document.querySelector('.progress-bar').classList.remove('hidden');
+
+            // Load questions from server
+            google.script.run
+                .withSuccessHandler(initializeQuiz)
+                .withFailureHandler(handleError)
+                .getQuestions(subject);
+        }
+
+        function handleError(error) {
+            showModal(error.message || "An error occurred while loading the quiz.");
+            console.error('Error:', error);
+        }
+
+        // Add email validation function
+        function isValidEmail(email) {
+            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        }
+
+        // Initialize Quiz with Loaded Questions
+        function initializeQuiz(data) {
+            questions = data;
+            wrongAttempts = new Array(questions.length).fill(0);
+            answeredQuestions.clear();
+            totalScore = 0;
+            totalPossiblePoints = questions.reduce((sum, q) => sum + q.points, 0);
+            currentQuestionIndex = 0;
+            updateProgressBar();
+            displayQuestion();
+            console.log("Quiz initialized with " + questions.length + " questions. Total possible points: " + totalPossiblePoints);
+        }
+
+        // Shuffle Function for Choices
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        // Update the displayQuestion function to add a container for buttons
+        // function displayQuestion() {
+        //     const question = questions[currentQuestionIndex];
+        //     const shuffledChoices = [...question.choices];
+        //     shuffleArray(shuffledChoices);
+
+        //     let quizHtml = '<div class="question">';
+        //     quizHtml += `<p><strong>Q${currentQuestionIndex + 1}: ${question.title}</strong></p>`;
+        //     quizHtml += `<p class="point-value">(ලකුණු ${question.points})</p>`;
+
+        //     shuffledChoices.forEach(choice => {
+        //         const isSelected = isChoiceSelected(question.index, choice.text);
+        //         const isDisabled = answeredQuestions.has(question.index);
+        //         quizHtml += `
+        //             <label>
+        //                 <input type="radio" name="q${currentQuestionIndex}" value="${choice.text}" ${isSelected ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
+        //                 ${choice.text}
+        //             </label>
+        //         `;
+        //     });
+
+        //     quizHtml += '<div id="feedback" class="feedback hidden"></div>';
+
+        //     // Add a container for buttons
+        //     quizHtml += '<div id="button-container">';
+        //     if (answeredQuestions.has(question.index)) {
+        //         quizHtml += '<button onclick="nextQuestion()" class="next-button">Next Question</button>';
+        //     } else {
+        //         quizHtml += '<button onclick="submitAnswer()" class="button">Submit Answer</button>';
+        //     }
+        //     quizHtml += '</div>';
+
+        //     quizHtml += '</div>';
+
+        //     document.getElementById('quiz').innerHTML = quizHtml;
+        // }
+
+
+        function displayQuestion() {
+            const question = questions[currentQuestionIndex];
+            const shuffledChoices = [...question.choices];
+            shuffleArray(shuffledChoices);
+
+            let quizHtml = '<div class="question">';
+            quizHtml += `<p><strong>Q${currentQuestionIndex + 1}: ${question.title}</strong></p>`;
+            quizHtml += `<p class="point-value">(ලකුණු ${question.points})</p>`;
+
+            shuffledChoices.forEach(choice => {
+                const isSelected = isChoiceSelected(question.index, choice.text);
+                const isDisabled = answeredQuestions.has(question.index);
+                quizHtml += `
+            <label>
+                <input type="radio" name="q${currentQuestionIndex}" value="${choice.text}" 
+                    ${isSelected ? 'checked' : ''} 
+                    ${isDisabled ? 'disabled' : ''}>
+                <span>${choice.text}</span>
+            </label>
+        `;
+            });
+
+            quizHtml += '<div id="feedback" class="feedback hidden"></div>';
+            quizHtml += '<div id="button-container">';
+            if (answeredQuestions.has(question.index)) {
+                quizHtml += '<button onclick="nextQuestion()" class="next-button">Next Question</button>';
+            } else {
+                quizHtml += '<button onclick="submitAnswer()" class="button">Submit Answer</button>';
+            }
+            quizHtml += '</div></div>';
+
+            document.getElementById('quiz').innerHTML = quizHtml;
+        }
+
+        // Check if a choice was previously selected
+        function isChoiceSelected(questionIndex, choiceText) {
+            if (!answeredQuestions.has(questionIndex)) return false;
+            // Find the question
+            const question = questions.find(q => q.index === questionIndex);
+            if (!question) return false;
+            // Find the choice that was selected (correct or incorrect)
+            const selectedChoice = question.choices.find(c => c.text === choiceText);
+            return selectedChoice && selectedChoice.isCorrect;
+        }
+
+        // Submit Answer Function
+        function submitAnswer() {
+            const selected = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+            if (!selected) {
+                showModal("කරුණාකර පිළිතුරු ඉදිරිපත් කිරීමට පෙර පිළිතුරක් තෝරන්න.");
+                return;
+            }
+
+            const subject = '<?!= subject ?>'; // Get subject from server
+            const answerText = selected.value;
+            const question = questions[currentQuestionIndex];
+            const answerIndex = question.choices.findIndex(choice => choice.text === answerText);
+
+            // Disable all radio buttons and submit button immediately
+            const radios = document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`);
+            radios.forEach(radio => radio.disabled = true);
+            const submitButton = document.querySelector('.button');
+            if (submitButton) submitButton.disabled = true;
+
+            console.log(`Submitting answer for question index ${question.index}: ${answerText}`);
+
+            // Send submission to server with subject parameter
+            google.script.run
+                .withSuccessHandler(result => {
+                    displayFeedback(result);
+                    // Only update score if it's the first attempt and the answer is correct
+                    if (!answeredQuestions.has(question.index) && result.isCorrect) {
+                        totalScore += question.points;
+                        answeredQuestions.add(question.index);
+                        updateProgressBar();
+                    }
+                    console.log(`Current score: ${totalScore}, Answered questions: ${Array.from(answeredQuestions)}`);
+                })
+                .withFailureHandler(error => {
+                    showModal("Error submitting answer. Please try again.");
+                    console.error('Submit error:', error);
+                    // Re-enable inputs
+                    radios.forEach(radio => radio.disabled = false);
+                    if (submitButton) submitButton.disabled = false;
+                })
+                .submitAnswer(question.index, answerIndex, subject);
+        }
+
+        // Display Feedback from Server
+        //     function displayFeedback(result) {
+        //     const feedbackElement = document.getElementById('feedback');
+        //     feedbackElement.innerHTML = result.feedback;
+        //     feedbackElement.classList.remove('hidden');
+        //     feedbackElement.classList.add(result.isCorrect ? 'correct' : 'incorrect');
+
+        //     const question = questions[currentQuestionIndex];
+        //     Analytics.trackAnswer(currentQuestionIndex, result.isCorrect);
+        //     if (result.isCorrect) {
+        //         if (!answeredQuestions.has(question.index)) {
+        //             totalScore += result.points;
+        //             answeredQuestions.add(question.index);
+        //             updateProgressBar();
+        //         }
+        //         showNextButton();
+        //     } else {
+        //         wrongAttempts[currentQuestionIndex]++;
+
+        //         // Calculate wait time based on feedback and question length
+        //         const waitTime = calculateInitialWaitTime(question, result);
+        //         startCountdown(waitTime, false);
+        //     }
+
+        //     applyStyles();
+        // }
+
+        // Update the displayFeedback function
+        function displayFeedback(result) {
+            const feedbackElement = document.getElementById('feedback');
+            const buttonContainer = document.getElementById('button-container');
+
+            feedbackElement.innerHTML = result.feedback;
+            feedbackElement.classList.remove('hidden');
+            feedbackElement.classList.add(result.isCorrect ? 'correct' : 'incorrect');
+
+            const question = questions[currentQuestionIndex];
+
+            if (result.isCorrect) {
+                if (!answeredQuestions.has(question.index)) {
+                    totalScore += result.points;
+                    answeredQuestions.add(question.index);
+                    updateProgressBar();
+                }
+
+                // Replace submit button with next button
+                const isLastQuestion = currentQuestionIndex === questions.length - 1;
+                buttonContainer.innerHTML = `
+            <button onclick="${isLastQuestion ? 'showFinalScore()' : 'nextQuestion()'}" class="next-button">
+                ${isLastQuestion ? 'View Score' : 'Next Question'}
+            </button>
+        `;
+            } else {
+                wrongAttempts[currentQuestionIndex]++;
+
+                // Disable submit button during countdown
+                const submitButton = buttonContainer.querySelector('.button');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+
+                const waitTime = calculateInitialWaitTime(question, result);
+                startCountdown(waitTime, false);
+            }
+
+            applyStyles();
+        }
+
+        // Generate Fibonacci Number for Wait Time
+        function getFibonacci(n) {
+            if (n <= 1) return n;
+            let a = 0, b = 1, temp;
+            for (let i = 2; i <= n; i++) {
+                temp = a + b;
+                a = b;
+                b = temp;
+            }
+            return b;
+        }
+
+        function calculateInitialWaitTime(question, result) {
+            // Average reading speed (characters per second)
+            // Using a slower speed for educational content
+            const READING_SPEED = 25; // characters per second
+            const MIN_WAIT_TIME = 8;  // minimum seconds
+            const MAX_WAIT_TIME = 30; // maximum seconds
+
+            // Calculate total text length to read
+            let totalLength = 0;
+
+            // Add question text length
+            totalLength += question.title.length;
+
+            // Add chosen answer length
+            const selectedAnswer = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+            if (selectedAnswer) {
+                totalLength += selectedAnswer.value.length;
+            }
+
+            // Add feedback text length
+            const feedback = result.isCorrect ? question.feedbackCorrect : question.feedbackIncorrect;
+            totalLength += feedback.length;
+
+            // Calculate base reading time
+            let baseReadingTime = Math.ceil(totalLength / READING_SPEED);
+
+            // Add buffer time for comprehension
+            let bufferTime = Math.ceil(baseReadingTime * 0.3); // 30% extra time for comprehension
+
+            // Calculate final wait time
+            let waitTime = baseReadingTime + bufferTime;
+
+            // Apply Fibonacci increase for consecutive wrong attempts
+            if (!result.isCorrect && wrongAttempts[currentQuestionIndex] > 0) {
+                const fibMultiplier = getFibonacci(wrongAttempts[currentQuestionIndex]);
+                waitTime += fibMultiplier * 2;
+            }
+
+            // Ensure wait time stays within bounds
+            waitTime = Math.max(MIN_WAIT_TIME, Math.min(waitTime, MAX_WAIT_TIME));
+
+            return waitTime;
+        }
+
+        // Start Countdown Timer for Retry
+        function startCountdown(seconds, moveToNext) {
+            const countdownElement = document.getElementById('countdown');
+            countdownElement.classList.remove('hidden');
+
+            function formatTime(secs) {
+                const minutes = Math.floor(secs / 60);
+                const remainingSeconds = secs % 60;
+                if (minutes > 0) {
+                    return `${minutes}m ${remainingSeconds}s`;
+                }
+                return `${remainingSeconds}s`;
+            }
+
+            const messageText = moveToNext ? 'Next question in' : 'Please read the feedback. You can try again in';
+            countdownElement.innerHTML = `
+        <div>${messageText} ${formatTime(seconds)}</div>
+        <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; margin-top: 8px;">
+            <div id="countdown-progress" style="width: 100%; height: 100%; background: #2196F3; border-radius: 2px; transition: width 1s linear;"></div>
+        </div>
+    `;
+
+            const submitButton = document.querySelector('.button');
+            if (submitButton) submitButton.disabled = true;
+
+            clearInterval(countdownTimer);
+            const startTime = seconds;
+
+            countdownTimer = setInterval(() => {
+                seconds--;
+                const progressBar = document.getElementById('countdown-progress');
+                if (progressBar) {
+                    progressBar.style.width = `${(seconds / startTime) * 100}%`;
+                }
+
+                if (seconds > 0) {
+                    countdownElement.firstElementChild.textContent =
+                        `${messageText} ${formatTime(seconds)}`;
+                } else {
+                    clearInterval(countdownTimer);
+                    countdownElement.classList.add('hidden');
+                    countdownElement.textContent = '';
+
+                    if (submitButton) submitButton.disabled = false;
+
+                    if (moveToNext) {
+                        currentQuestionIndex++;
+                        displayQuestion();
+                    } else {
+                        document.getElementById('feedback').classList.add('hidden');
+                        displayQuestion();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Show Next Button After Correct Answer
+        function showNextButton() {
+            const quizSection = document.querySelector('.question');
+            if (quizSection && !quizSection.querySelector('.next-button')) {
+                const nextButton = document.createElement('button');
+                nextButton.className = 'next-button';
+                nextButton.onclick = nextQuestion;
+
+                // Check if it's the last question
+                if (currentQuestionIndex === questions.length - 1) {
+                    nextButton.textContent = 'View Score';
+                    nextButton.onclick = showFinalScore;
+                } else {
+                    nextButton.textContent = 'Next';
+                }
+
+                quizSection.appendChild(nextButton);
+            }
+        }
+
+        // Next Question Function
+        function nextQuestion() {
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                displayQuestion();
+            } else {
+                showFinalScore();
+            }
+
+            console.log(`Moving to question ${currentQuestionIndex + 1}`);
+        }
+
+        // Update Progress Bar
+        function updateProgressBar() {
+            const progress = (answeredQuestions.size / questions.length) * 100;
+            const progressElement = document.getElementById('progress');
+            progressElement.style.width = `${progress}%`;
+
+            const hue = Math.floor(40 + (80 * progress / 100));
+            progressElement.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+
+            console.log(`Progress updated: ${progress}%`);
+        }
+
+        // Show Final Score
+        function showFinalScore() {
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('countdown').classList.add('hidden');
+
+            const correctFirstAttempts = answeredQuestions.size;
+            const totalQuestions = questions.length;
+            Analytics.trackQuizComplete(totalScore, totalPossiblePoints);
+            const resultHtml = `
+                <h2>Quiz Completed!</h2>
+                <p>Correct answers on first attempt: ${correctFirstAttempts} out of ${totalQuestions}</p>
+                <p>Your final score: ${totalScore} out of ${totalPossiblePoints}</p>
+                <button onclick="retryQuiz()" class="button">Retry Quiz</button>
+            `;
+
+            document.getElementById('result').innerHTML = resultHtml;
+            document.getElementById('result').classList.remove('hidden');
+            applyStyles();
+
+            console.log(`Quiz completed. Correct on first attempt: ${correctFirstAttempts}/${totalQuestions}. Total score: ${totalScore}/${totalPossiblePoints}`);
+
+            // Only send email if an email address was provided
+            // if (email) {
+            google.script.run
+                .withSuccessHandler((result) => {
+                    if (result) {
+                        console.log("Score logged and email sent successfully");
+                    } else {
+                        console.error("Failed to send email");
+                    }
+                })
+                .logScoreAndSendEmail(username, email, totalScore, totalPossiblePoints);
+            // }
+        }
+
+        // Retry Quiz Function
+        function retryQuiz() {
+            currentQuestionIndex = 0;
+            totalScore = 0;
+            answeredQuestions.clear();
+            wrongAttempts = new Array(questions.length).fill(0);
+            waitTime = 10;
+
+            clearInterval(countdownTimer);
+
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('countdown').classList.add('hidden');
+            document.getElementById('countdown').textContent = '';
+            document.getElementById('quiz').classList.remove('hidden');
+            document.querySelector('.progress-bar').classList.remove('hidden');
+
+            updateProgressBar();
+            loadQuestions();
+
+            console.log("Quiz restarted.");
+        }
+
+        // View Score Function
+        function viewScore() {
+            showModal(`Your final score is ${totalScore} out of ${totalPossiblePoints}.`);
+        }
+
+        // Apply Styles Based on Current State
+        function applyStyles() {
+            // No additional dynamic styles needed as CSS handles most styling
+        }
+
+        // Analytics tracking functions
+        const Analytics = {
+            // Track page view with subject
+            trackPageView: function (subject) {
+                gtag('event', 'page_view', {
+                    'page_title': 'MCQ Quiz',
+                    'page_location': window.location.href,
+                    'subject': subject
+                });
+            },
+
+            // Track quiz start
+            trackQuizStart: function (subject, username) {
+                gtag('event', 'quiz_start', {
+                    'subject': subject,
+                    'username': username
+                });
+            },
+
+            // Track question answer
+            trackAnswer: function (questionIndex, isCorrect) {
+                gtag('event', 'answer_question', {
+                    'subject': '<?= subject ?>',
+                    'question_index': questionIndex,
+                    'is_correct': isCorrect
+                });
+            },
+
+            // Track quiz completion
+            trackQuizComplete: function (score, totalPossible) {
+                gtag('event', 'quiz_complete', {
+                    'subject': '<?= subject ?>',
+                    'score': score,
+                    'total_possible': totalPossible,
+                    'percentage': Math.round((score / totalPossible) * 100)
+                });
+            }
+        };
+    </script>
+</body>
+
+</html>
