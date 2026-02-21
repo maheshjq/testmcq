@@ -175,7 +175,7 @@ export default function QuizPage() {
 
         {quiz.state === QUIZ_STATES.COUNTDOWN && (
           <CountdownTimer
-            waitTime={quiz.calculateWaitTime()}
+            waitTime={quiz.waitTime}
             onComplete={quiz.retryQuestion}
           />
         )}
