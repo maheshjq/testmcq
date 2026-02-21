@@ -24,7 +24,7 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link to="/quiz" className="text-cream/50 hover:text-cream text-sm transition-colors no-underline">
+                <Link to="/" className="text-cream/50 hover:text-cream text-sm transition-colors no-underline">
                   Start a Quiz
                 </Link>
               </li>

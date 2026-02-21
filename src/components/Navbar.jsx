@@ -46,7 +46,7 @@ export default function Navbar() {
             {link.label}
           </a>
         ))}
-        <Link to="/quiz" className="btn-primary text-sm py-2 px-6 no-underline">
+        <Link to="/" className="btn-primary text-sm py-2 px-6 no-underline">
           Start Quiz →
         </Link>
       </div>
@@ -78,7 +78,7 @@ export default function Navbar() {
             </a>
           ))}
           <Link
-            to="/quiz"
+            to="/"
             className="btn-primary text-sm py-2 px-6 text-center no-underline"
             onClick={() => setMobileOpen(false)}
           >
