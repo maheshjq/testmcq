@@ -1,7 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { QUIZ_STATES, READING_SPEED, MIN_WAIT_TIME, MAX_WAIT_TIME } from '../constants';
 import { logEvent } from '../firebase';
-import sampleQuestions from '../data/sample-questions.json';
+
+// Dynamic import map for Vite bundling — keys must match filenames in src/data/
+const dataModules = import.meta.glob('../data/*.js');
 
 function getFibonacci(n) {
   if (n <= 1) return n;
@@ -53,35 +55,43 @@ export default function useQuiz() {
     [answeredQuestions.size, questions.length]
   );
 
-  const loadQuestions = useCallback(async (subjectId) => {
+  const loadQuestions = useCallback(async (lessonFiles) => {
     setState(QUIZ_STATES.LOADING);
-    setSubject(subjectId);
     setError(null);
 
     try {
-      // Try to fetch a subject-specific JSON from the server first
-      let data;
-      try {
-        const response = await fetch(`/question-sets/${subjectId}.json`);
-        if (response.ok) {
-          data = await response.json();
+      const allQuestions = [];
+
+      for (const file of lessonFiles) {
+        try {
+          const modulePath = `../data/${file}`;
+          const loader = dataModules[modulePath];
+          if (!loader) {
+            console.error(`No module found for ${file}`);
+            continue;
+          }
+          const module = await loader();
+          const data = module.default;
+          const questionList = Array.isArray(data) ? data : data.questions || [];
+          allQuestions.push(...questionList);
+        } catch (err) {
+          console.error(`Failed to load ${file}:`, err);
         }
-      } catch {
-        // Ignore fetch errors for file-based loading
       }
 
-      // Fall back to the bundled sample questions from src/data/
-      if (!data) {
-        data = sampleQuestions;
+      if (allQuestions.length === 0) {
+        throw new Error('No questions found for the selected lessons');
       }
 
-      const questionList = Array.isArray(data) ? data : data.questions || [];
-      if (questionList.length === 0) {
-        throw new Error('No questions found for this subject');
-      }
+      // Re-index merged questions to prevent navigation bugs
+      const reindexed = allQuestions.map((q, i) => ({
+        ...q,
+        index: i + 1,
+        id: q.id || `q-${i + 1}`,
+      }));
 
       // Shuffle questions, and shuffle choices within each question
-      const shuffledQuestions = shuffleArray(questionList).map((q) => ({
+      const shuffledQuestions = shuffleArray(reindexed).map((q) => ({
         ...q,
         choices: shuffleArray(q.choices),
       }));
@@ -94,12 +104,12 @@ export default function useQuiz() {
       setSelectedAnswer(null);
       setState(QUIZ_STATES.QUESTION);
 
-      logEvent('quiz_start', { subject: subjectId, username });
+      logEvent('quiz_start', { subject: subject, username, lessonCount: lessonFiles.length });
     } catch (err) {
       setError(err.message);
       setState(QUIZ_STATES.IDLE);
     }
-  }, [username]);
+  }, [username, subject]);
 
   const calculateWaitTime = useCallback((currentAttemptCount) => {
     if (!currentQuestion || selectedAnswer === null) return MIN_WAIT_TIME;
@@ -217,9 +227,9 @@ export default function useQuiz() {
   }, []);
 
   const startQuiz = useCallback(
-    (subjectId) => {
+    (lessonFiles) => {
       if (!username.trim()) return;
-      loadQuestions(subjectId);
+      loadQuestions(lessonFiles);
     },
     [username, loadQuestions]
   );

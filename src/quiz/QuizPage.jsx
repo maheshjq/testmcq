@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import useQuiz from '../hooks/useQuiz';
-import { QUIZ_STATES, SUBJECT_REGEX } from '../constants';
+import { QUIZ_STATES } from '../constants';
+import { getCategoryById } from '@/config/lessons-metadata';
 import ProgressBar from './ProgressBar';
 import UsernameGate from './UsernameGate';
 import QuestionCard from './QuestionCard';
@@ -45,78 +46,49 @@ function ErrorState({ message }) {
   );
 }
 
-function SubjectPicker({ onSelect }) {
-  return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
-      <div className="card max-w-md w-full text-center">
-        <h3 className="text-xl font-bold text-moss mb-2">Select a Subject</h3>
-        <p className="text-charcoal/50 text-sm mb-6">
-          Add <code className="font-mono bg-moss/5 px-2 py-0.5 rounded text-xs">?subject=grade_10_lesson_05</code> to the URL, or choose one below:
-        </p>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {['grade_6_lesson_01', 'grade_7_lesson_01', 'grade_8_lesson_01', 'grade_10_lesson_05'].map((s) => (
-            <button
-              key={s}
-              onClick={() => onSelect(s)}
-              className="px-4 py-2 rounded-full text-xs font-mono bg-moss/10 text-moss hover:bg-clay hover:text-white transition-colors cursor-pointer border-none"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function QuizPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const subjectParam = searchParams.get('subject');
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const categoryId = searchParams.get('category');
+  const filesParam = searchParams.get('files');
+
+  const lessonFiles = useMemo(
+    () => (filesParam ? decodeURIComponent(filesParam).split(',').filter(Boolean) : []),
+    [filesParam]
+  );
+
+  const category = categoryId ? getCategoryById(categoryId) : null;
+  const displayName = category ? category.title : categoryId || '';
 
   const quiz = useQuiz();
 
+  // Initialize quiz when we have valid params
   useEffect(() => {
-    if (subjectParam && SUBJECT_REGEX.test(subjectParam)) {
-      quiz.initQuiz(subjectParam);
+    if (lessonFiles.length > 0 && categoryId) {
+      quiz.initQuiz(categoryId);
     }
-  }, [subjectParam]);
+  }, [categoryId, lessonFiles.length]);
 
-  const handleSubjectSelect = (subjectId) => {
-    setSearchParams({ subject: subjectId });
-  };
-
-  // No subject specified
-  if (!subjectParam) {
+  // No files specified — redirect to home
+  if (!filesParam || lessonFiles.length === 0) {
     return (
       <div className="min-h-screen bg-cream">
         <div className="max-w-4xl mx-auto py-12 px-4">
-          <Link to="/" className="inline-flex items-center gap-1 text-sm text-moss/50 hover:text-moss mb-8 no-underline">
-            <ArrowLeft size={14} /> Back
-          </Link>
-          <SubjectPicker onSelect={handleSubjectSelect} />
+          <ErrorState message="No lessons selected. Please choose lessons from the home page." />
         </div>
       </div>
     );
   }
 
-  // Invalid subject
-  if (!SUBJECT_REGEX.test(subjectParam)) {
-    return (
-      <div className="min-h-screen bg-cream">
-        <div className="max-w-4xl mx-auto py-12 px-4">
-          <ErrorState message={`Invalid subject format: "${subjectParam}". Use format like grade_10_lesson_05`} />
-        </div>
-      </div>
-    );
-  }
+  const backPath = categoryId ? `/lessons/${categoryId}` : '/';
 
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-4xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Link to="/" className="inline-flex items-center gap-1 text-sm text-moss/50 hover:text-moss no-underline">
-            <ArrowLeft size={14} /> Home
+          <Link to={backPath} className="inline-flex items-center gap-1 text-sm text-moss/50 hover:text-moss no-underline">
+            <ArrowLeft size={14} /> Back
           </Link>
           {quiz.state !== QUIZ_STATES.USERNAME_ENTRY && quiz.state !== QUIZ_STATES.IDLE && (
             <span className="font-mono text-xs text-charcoal/40">
@@ -130,7 +102,7 @@ export default function QuizPage() {
           quiz.state !== QUIZ_STATES.IDLE &&
           quiz.state !== QUIZ_STATES.FINAL_SCORE && (
             <div className="mb-8">
-              <h2 className="text-sm font-mono text-moss/50 mb-3">{quiz.subject}</h2>
+              <h2 className="text-sm font-mono text-moss/50 mb-3">{displayName}</h2>
               <ProgressBar
                 current={quiz.answeredQuestions.size}
                 total={quiz.questions.length}
@@ -146,8 +118,8 @@ export default function QuizPage() {
             email={quiz.email}
             onUsernameChange={quiz.setUsername}
             onEmailChange={quiz.setEmail}
-            onStart={() => quiz.startQuiz(subjectParam)}
-            subject={subjectParam}
+            onStart={() => quiz.startQuiz(lessonFiles)}
+            subject={displayName}
           />
         )}
 
@@ -180,7 +152,7 @@ export default function QuizPage() {
             totalQuestions={quiz.questions.length}
             answeredCount={quiz.answeredQuestions.size}
             username={quiz.username}
-            onRetry={quiz.resetQuiz}
+            onRetry={() => navigate('/')}
           />
         )}
 

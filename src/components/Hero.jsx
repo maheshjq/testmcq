@@ -41,7 +41,7 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/quiz" className="btn-primary text-lg py-4 px-10 no-underline inline-flex items-center justify-center gap-2">
+            <Link to="/" className="btn-primary text-lg py-4 px-10 no-underline inline-flex items-center justify-center gap-2">
               Begin Your Quiz
               <ArrowRight size={20} />
             </Link>
