@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { QUIZ_STATES, READING_SPEED, MIN_WAIT_TIME, MAX_WAIT_TIME } from '../constants';
 import { logEvent } from '../firebase';
+import sampleQuestions from '../data/sample-questions.json';
 
 function getFibonacci(n) {
   if (n <= 1) return n;
@@ -58,7 +59,7 @@ export default function useQuiz() {
     setError(null);
 
     try {
-      // Try to load from local sample data first (for dev), then Firebase
+      // Try to fetch a subject-specific JSON from the server first
       let data;
       try {
         const response = await fetch(`/question-sets/${subjectId}.json`);
@@ -69,11 +70,9 @@ export default function useQuiz() {
         // Ignore fetch errors for file-based loading
       }
 
+      // Fall back to the bundled sample questions from src/data/
       if (!data) {
-        // Fallback to sample data
-        const response = await fetch('/sample-questions.json');
-        if (!response.ok) throw new Error('Could not load questions');
-        data = await response.json();
+        data = sampleQuestions;
       }
 
       const questionList = Array.isArray(data) ? data : data.questions || [];
@@ -170,10 +169,6 @@ export default function useQuiz() {
       });
     }
   }, [selectedAnswer, currentQuestion, answeredQuestions, wrongAttempts, calculateWaitTime]);
-
-  const startCountdown = useCallback(() => {
-    setState(QUIZ_STATES.COUNTDOWN);
-  }, []);
 
   const retryQuestion = useCallback(() => {
     setSelectedAnswer(null);
@@ -276,8 +271,6 @@ export default function useQuiz() {
     initQuiz,
     startQuiz,
     submitAnswer,
-    calculateWaitTime,
-    startCountdown,
     retryQuestion,
     nextQuestion,
     dismissInterstitial,

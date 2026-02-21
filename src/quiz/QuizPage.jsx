@@ -8,7 +8,6 @@ import ProgressBar from './ProgressBar';
 import UsernameGate from './UsernameGate';
 import QuestionCard from './QuestionCard';
 import FeedbackPanel from './FeedbackPanel';
-import CountdownTimer from './CountdownTimer';
 import FinalScore from './FinalScore';
 import InterstitialAd from './InterstitialAd';
 
@@ -169,14 +168,8 @@ export default function QuizPage() {
             isCorrect={quiz.isCorrect}
             feedbackText={quiz.feedbackText}
             onNext={quiz.nextQuestion}
-            onStartCountdown={quiz.startCountdown}
-          />
-        )}
-
-        {quiz.state === QUIZ_STATES.COUNTDOWN && (
-          <CountdownTimer
             waitTime={quiz.waitTime}
-            onComplete={quiz.retryQuestion}
+            onCountdownComplete={quiz.retryQuestion}
           />
         )}
 

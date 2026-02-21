@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock } from 'lucide-react';
 import useCountdown from '../hooks/useCountdown';
 
 export default function CountdownTimer({ waitTime, onComplete }) {
@@ -14,46 +13,37 @@ export default function CountdownTimer({ waitTime, onComplete }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="card max-w-md mx-auto text-center"
+      className="text-center pt-2"
     >
-      <div className="w-16 h-16 rounded-full bg-moss/10 flex items-center justify-center mx-auto mb-6">
-        <Clock className="text-moss" size={28} />
-      </div>
-
-      <h3 className="text-lg font-bold text-moss mb-2">Take a moment</h3>
-      <p className="text-charcoal/50 text-sm mb-8">
-        Review the feedback before trying again
-      </p>
-
       {/* Circular countdown */}
-      <div className="relative w-24 h-24 mx-auto mb-6">
-        <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
+      <div className="relative w-20 h-20 mx-auto mb-4">
+        <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
           <circle
-            cx="48"
-            cy="48"
-            r="42"
+            cx="40"
+            cy="40"
+            r="34"
             fill="none"
             stroke="#2E403620"
             strokeWidth="4"
           />
           <circle
-            cx="48"
-            cy="48"
-            r="42"
+            cx="40"
+            cy="40"
+            r="34"
             fill="none"
             stroke="#CC5833"
             strokeWidth="4"
-            strokeDasharray={264}
-            strokeDashoffset={264 * (1 - progress)}
+            strokeDasharray={214}
+            strokeDashoffset={214 * (1 - progress)}
             strokeLinecap="round"
             className="transition-all duration-1000 ease-linear"
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-mono text-2xl font-bold text-moss">{timeLeft}</span>
+          <span className="font-mono text-xl font-bold text-moss">{timeLeft}</span>
         </div>
       </div>
 
@@ -66,8 +56,8 @@ export default function CountdownTimer({ waitTime, onComplete }) {
         />
       </div>
 
-      <p className="text-xs font-mono text-charcoal/30 mt-4">
-        {timeLeft > 0 ? `${timeLeft}s remaining` : 'Ready to retry!'}
+      <p className="text-xs font-mono text-charcoal/30 mt-3">
+        {timeLeft > 0 ? `Retry available in ${timeLeft}s` : 'Reshuffling choices…'}
       </p>
     </motion.div>
   );

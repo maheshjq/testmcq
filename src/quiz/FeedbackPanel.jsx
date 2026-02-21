@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Star, ArrowRight } from 'lucide-react';
+import CountdownTimer from './CountdownTimer';
 
-export default function FeedbackPanel({ isCorrect, feedbackText, onNext, onStartCountdown }) {
+export default function FeedbackPanel({ isCorrect, feedbackText, onNext, waitTime, onCountdownComplete }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
 
@@ -72,16 +73,14 @@ export default function FeedbackPanel({ isCorrect, feedbackText, onNext, onStart
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action: correct → next button, wrong → inline countdown */}
       {isCorrect ? (
         <button onClick={onNext} className="btn-primary w-full flex items-center justify-center gap-2">
           Next Question
           <ArrowRight size={18} />
         </button>
       ) : (
-        <button onClick={onStartCountdown} className="btn-primary w-full bg-moss hover:bg-moss-600">
-          I've Read the Feedback — Continue
-        </button>
+        <CountdownTimer waitTime={waitTime} onComplete={onCountdownComplete} />
       )}
     </motion.div>
   );
