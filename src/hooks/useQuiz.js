@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { QUIZ_STATES, READING_SPEED, MIN_WAIT_TIME, MAX_WAIT_TIME } from '../constants';
 import { logEvent } from '../firebase';
+import sampleQuestions from '../data/sample-questions.json';
 
 function getFibonacci(n) {
   if (n <= 1) return n;
@@ -35,6 +36,7 @@ export default function useQuiz() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [error, setError] = useState(null);
   const [showInterstitial, setShowInterstitial] = useState(false);
+  const [waitTime, setWaitTime] = useState(0);
 
   const currentQuestion = useMemo(
     () => questions[currentQuestionIndex] || null,
@@ -57,7 +59,7 @@ export default function useQuiz() {
     setError(null);
 
     try {
-      // Try to load from local sample data first (for dev), then Firebase
+      // Try to fetch a subject-specific JSON from the server first
       let data;
       try {
         const response = await fetch(`/question-sets/${subjectId}.json`);
@@ -68,11 +70,9 @@ export default function useQuiz() {
         // Ignore fetch errors for file-based loading
       }
 
+      // Fall back to the bundled sample questions from src/data/
       if (!data) {
-        // Fallback to sample data
-        const response = await fetch('/sample-questions.json');
-        if (!response.ok) throw new Error('Could not load questions');
-        data = await response.json();
+        data = sampleQuestions;
       }
 
       const questionList = Array.isArray(data) ? data : data.questions || [];
@@ -101,6 +101,25 @@ export default function useQuiz() {
     }
   }, [username]);
 
+  const calculateWaitTime = useCallback((currentAttemptCount) => {
+    if (!currentQuestion || selectedAnswer === null) return MIN_WAIT_TIME;
+
+    const chosen = currentQuestion.choices[selectedAnswer];
+    const feedback = currentQuestion.feedbackIncorrect || '';
+    const totalLength =
+      currentQuestion.title.length + (chosen?.text?.length || 0) + feedback.length;
+    const baseReadingTime = Math.ceil(totalLength / READING_SPEED);
+    const bufferTime = Math.ceil(baseReadingTime * 0.3);
+    let computed = baseReadingTime + bufferTime;
+
+    if (currentAttemptCount > 0) {
+      const fibMultiplier = getFibonacci(currentAttemptCount);
+      computed += fibMultiplier * 2;
+    }
+
+    return Math.max(MIN_WAIT_TIME, Math.min(computed, MAX_WAIT_TIME));
+  }, [currentQuestion, selectedAnswer]);
+
   const submitAnswer = useCallback(() => {
     if (selectedAnswer === null || !currentQuestion) return;
 
@@ -113,11 +132,12 @@ export default function useQuiz() {
     if (correct) {
       setFeedbackText(currentQuestion.feedbackCorrect || 'Correct!');
 
-      // Only award points on first correct attempt
+      // Award points ONLY on first attempt
       if (!answeredQuestions.has(qIndex)) {
         setScore((prev) => prev + (currentQuestion.points || 1));
-        setAnsweredQuestions((prev) => new Set([...prev, qIndex]));
       }
+      // Always mark as done (gates progress bar and next button)
+      setAnsweredQuestions((prev) => new Set([...prev, qIndex]));
 
       setState(QUIZ_STATES.FEEDBACK_CORRECT);
 
@@ -130,14 +150,16 @@ export default function useQuiz() {
         currentQuestion.feedbackIncorrect || 'Incorrect. Please try again.'
       );
 
-      // Track wrong attempts for this question
+      // Track wrong attempts for this question — compute fresh count for wait time
+      const newAttemptCount = (wrongAttempts[qIndex] || 0) + 1;
       setWrongAttempts((prev) => ({
         ...prev,
-        [qIndex]: (prev[qIndex] || 0) + 1,
+        [qIndex]: newAttemptCount,
       }));
 
-      // Mark as answered (score frozen — no points on retry)
-      setAnsweredQuestions((prev) => new Set([...prev, qIndex]));
+      // Compute wait time with the fresh count (avoids stale-state read)
+      const waitSeconds = calculateWaitTime(newAttemptCount);
+      setWaitTime(waitSeconds);
 
       setState(QUIZ_STATES.FEEDBACK_WRONG);
 
@@ -146,32 +168,7 @@ export default function useQuiz() {
         is_correct: false,
       });
     }
-  }, [selectedAnswer, currentQuestion, answeredQuestions]);
-
-  const calculateWaitTime = useCallback(() => {
-    if (!currentQuestion || selectedAnswer === null) return MIN_WAIT_TIME;
-
-    const chosen = currentQuestion.choices[selectedAnswer];
-    const feedback = currentQuestion.feedbackIncorrect || '';
-    const totalLength =
-      currentQuestion.title.length + (chosen?.text?.length || 0) + feedback.length;
-    const baseReadingTime = Math.ceil(totalLength / READING_SPEED);
-    const bufferTime = Math.ceil(baseReadingTime * 0.3);
-    let waitTime = baseReadingTime + bufferTime;
-
-    const qIndex = currentQuestion.index;
-    const attempts = wrongAttempts[qIndex] || 0;
-    if (attempts > 0) {
-      const fibMultiplier = getFibonacci(attempts);
-      waitTime += fibMultiplier * 2;
-    }
-
-    return Math.max(MIN_WAIT_TIME, Math.min(waitTime, MAX_WAIT_TIME));
-  }, [currentQuestion, selectedAnswer, wrongAttempts]);
-
-  const startCountdown = useCallback(() => {
-    setState(QUIZ_STATES.COUNTDOWN);
-  }, []);
+  }, [selectedAnswer, currentQuestion, answeredQuestions, wrongAttempts, calculateWaitTime]);
 
   const retryQuestion = useCallback(() => {
     setSelectedAnswer(null);
@@ -238,6 +235,7 @@ export default function useQuiz() {
     setFeedbackText('');
     setError(null);
     setShowInterstitial(false);
+    setWaitTime(0);
   }, []);
 
   const initQuiz = useCallback((subjectId) => {
@@ -264,6 +262,7 @@ export default function useQuiz() {
     isCorrect,
     error,
     showInterstitial,
+    waitTime,
 
     // Actions
     setUsername,
@@ -272,8 +271,6 @@ export default function useQuiz() {
     initQuiz,
     startQuiz,
     submitAnswer,
-    calculateWaitTime,
-    startCountdown,
     retryQuestion,
     nextQuestion,
     dismissInterstitial,
